@@ -1,18 +1,32 @@
 using Photon.Pun;
+using Photon.Realtime;
+using Photon.Pun.UtilityScripts;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
+using UnityEngine.UI;
+using Photon.Pun.Demo.Asteroids;
 
 public class Enemy : MonoBehaviourPunCallbacks
 {
     [SerializeField] private float moveSpeed = 5.0f;
+    private float maxHP = 20f;
+    private float currentHP;
+    private float damage = 1f;
+    public float Damage => damage;
 
     private Transform target = null;
     private bool isDestroyed = false;
+    [SerializeField] private Image fillHP;
+    [SerializeField] private GameObject barHP;
+
     public override void OnEnable(){
         base.OnEnable();
         LookAtTarget();
         isDestroyed = false;
+        currentHP = maxHP;
+        UpdateHealth();
     }
 
     public void SetTarget(Transform target){
@@ -35,6 +49,16 @@ public class Enemy : MonoBehaviourPunCallbacks
 
     private void Move(){
         transform.Translate(Vector3.up * moveSpeed * Time.deltaTime);
+        /*if(Camera.main.transform == null)
+        {
+            Debug.LogError("Main camera was not found");
+            return;
+        }
+        if(hpBar == null)
+        {
+            Debug.LogError("hpBar was not found");
+            return;
+        }*/
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
@@ -42,9 +66,25 @@ public class Enemy : MonoBehaviourPunCallbacks
         if (isDestroyed) return;
         if (collision.gameObject.TryGetComponent<Bullet>(out Bullet bullet))
         {
-            //Grant score to the player that destroyed the enemy
-            ScoreManager.Instance.AddScore(100, bullet.Owner);
+            photonView.RPC("RPCTakeDamage", RpcTarget.AllBuffered,bullet.Damage,bullet.Owner);
+            bullet.DestroyOverNetwork();
             //Got hit by bullet
+        }
+    }
+
+    
+
+    [PunRPC]
+    private void RPCTakeDamage(float Damage, Photon.Realtime.Player player)
+    {
+        currentHP -= Damage;
+        UpdateHealth();
+
+        ScoreManager.Instance.AddScore(10, player);
+
+        if (currentHP <= 0)
+        {
+            ScoreManager.Instance.AddScore(100, player);
             DestroyOverNetwork();
         }
     }
@@ -63,5 +103,10 @@ public class Enemy : MonoBehaviourPunCallbacks
         {
             isDestroyed = true;
         }
+    }
+
+    private void UpdateHealth()
+    {
+        fillHP.fillAmount = currentHP / maxHP;
     }
 }

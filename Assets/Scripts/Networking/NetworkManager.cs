@@ -12,6 +12,8 @@ public class NetworkManager : SingletonPUN<NetworkManager>
     private const string PLAYER_PREFAB_NAME = "Player";
     [SerializeField]
     private Sprite[] playerIcons;
+    [SerializeField]
+    private Sprite[] playerBullets;
 
     public bool IsInitialized = false;
 
@@ -34,6 +36,19 @@ public class NetworkManager : SingletonPUN<NetworkManager>
         if (id > -1 && id < playerIcons.Length)
         {
             return playerIcons[id];
+        }
+        else
+        {
+            Debug.LogWarning($"Cannot access sprite with id {id}");
+        }
+        return null;
+    }
+
+    public Sprite GetPlayerBullet(int id)
+    {
+        if (id > -1 && id < playerBullets.Length)
+        {
+            return playerBullets[id];
         }
         else
         {

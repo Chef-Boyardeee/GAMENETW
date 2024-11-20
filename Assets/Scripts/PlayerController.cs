@@ -85,4 +85,14 @@ public class PlayerController : MonoBehaviourPunCallbacks
         // GetPlayerNumber is only accessible through Photon.Pun.UtilityScripts
         spriteRenderer.sprite = NetworkManager.Instance.GetPlayerIcon(photonView.Owner.GetPlayerNumber());
     }
+
+    public void DestroyOverNetwork()
+    {
+        // Only the player that spawned the object can destroy it
+        // Because the bullet is spawned by the player
+        if (photonView.IsMine)
+        {
+            PhotonNetwork.Destroy(this.gameObject);
+        }
+    }
 }
